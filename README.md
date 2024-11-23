@@ -1,1 +1,0 @@
-intstall the requirments.txt
