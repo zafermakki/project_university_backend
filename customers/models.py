@@ -6,6 +6,7 @@ class Customer(models.Model):
     password= models.CharField(max_length= 250)
     first_name= models.CharField(max_length= 250)
     last_name= models.CharField(max_length= 250)
+    profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
     
     
     class Meta:
