@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Cart, CartProduct, Product, Purchase
-from customers.models import Customer
+from users.models import User
 
 class CartProductSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,7 +34,7 @@ class CartProductsCreateSerializer(serializers.Serializer):
     quantity = serializers.IntegerField()
 
 class CartCreateSerializer(serializers.Serializer):
-    customer = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all())
+    customer = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     products = CartProductsCreateSerializer(write_only=True, many=True)
 
     def create(self, validated_data):

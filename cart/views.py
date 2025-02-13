@@ -4,8 +4,10 @@ from rest_framework import status
 from .serializers import CartCreateSerializer, CartSer,PurchaseSerializer,CartProductUpdateSerializer
 from .models import CartProduct,Purchase
 
+
 @api_view(['POST'])
 def AddCart(request):
+    print("Received Data:", request.data) 
     ser = CartCreateSerializer(data=request.data)
     if ser.is_valid():
         ser.save()

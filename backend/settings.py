@@ -38,11 +38,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'corsheaders',
     'products',
-    'customers',
     'cart',
-    'newgames'
+    'newgames',
+    "users",
 ]
 
 MIDDLEWARE = [
@@ -83,7 +84,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'za',
+        'NAME': 'zzz',
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'USER': 'root',
@@ -148,5 +149,27 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PARSER_CLASSES': [
         'rest_framework.parsers.JSONParser',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES':[
+        'rest_framework.authentication.TokenAuthentication'
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
     ]
 }
+
+AUTH_USER_MODEL='users.User'
+
+AUTHENTICATION_BACKENDS=[
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'zafermakki@gmail.com'
+EMAIL_HOST_PASSWORD = 'vrpo mfry goyj spqa'
+DEFAULT_FROM_EMAIL = 'zafermakki@gmail.com'
+FRONTEND_URL = 'http://127.0.0.1:3000'
+BACKEND_URL = "http://127.0.0.1:8000"

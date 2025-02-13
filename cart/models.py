@@ -1,9 +1,9 @@
 from django.db import models
-from customers.models import Customer
 from products.models import Product
+from users.models import User
 
 class Cart(models.Model):
-    customer = models.ForeignKey(Customer, on_delete=models.DO_NOTHING)
+    customer = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -25,7 +25,7 @@ class CartProduct(models.Model):
 
 # جدول الشراء الجديد
 class Purchase(models.Model):
-    customer = models.ForeignKey(Customer, on_delete=models.DO_NOTHING)
+    customer = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
     quantity = models.PositiveIntegerField()
     purchase_date = models.DateTimeField(auto_now_add=True)
