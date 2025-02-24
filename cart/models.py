@@ -3,7 +3,7 @@ from products.models import Product
 from users.models import User
 
 class Cart(models.Model):
-    customer = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    customer = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -13,8 +13,8 @@ class Cart(models.Model):
         return self.customer.username
 
 class CartProduct(models.Model):
-    cart = models.ForeignKey(Cart, on_delete=models.DO_NOTHING)
-    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
 
     class Meta:
@@ -25,8 +25,8 @@ class CartProduct(models.Model):
 
 # جدول الشراء الجديد
 class Purchase(models.Model):
-    customer = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
+    customer = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     purchase_date = models.DateTimeField(auto_now_add=True)
 

@@ -197,3 +197,33 @@ def get_user_rating(request, product_id):
         return Response(serializer.data, status=status.HTTP_200_OK)
     except ProductRating.DoesNotExist:
         return Response({"details": "you have not yet evaluated this product"}, status=status.HTTP_404_NOT_FOUND)
+    
+@api_view(['GET'])
+def top_rated_products(request):
+    products = Product.objects.annotate(avg_rating=Avg('ratings__rating')).filter(avg_rating__gte=4)
+    serializer = ProductModelSerializer(products, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def medium_rated_products(request):
+    products = Product.objects.annotate(avg_rating=Avg('ratings__rating')).filter(avg_rating__gte=2, avg_rating__lt=4)
+    serializer = ProductModelSerializer(products, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def low_rated_products(request):
+    products = Product.objects.annotate(avg_rating=Avg('ratings__rating')).filter(avg_rating__gte=0.5, avg_rating__lt=2)
+    serializer = ProductModelSerializer(products, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def offline_games(request):
+    offline_products = Product.objects.filter(games_type__icontains='offline')
+    serializer = ProductModelSerializer(offline_products, many= True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def online_games(request):
+    online_products = Product.objects.filter(games_type__icontains='online')
+    serializer = ProductModelSerializer(online_products, many=True)
+    return Response(serializer.data)

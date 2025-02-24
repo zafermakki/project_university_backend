@@ -243,7 +243,7 @@ class ClientLoginView(APIView):
         user = authenticate(username=email, password=password)
         if user and user.is_client:  # التأكد من أن المستخدم عميل
             token, created = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key, "user_id": user.id}, status=status.HTTP_200_OK)
+            return Response({"token": token.key, "user_id": user.id,"username": user.username}, status=status.HTTP_200_OK)
         return Response({"error": "Invalid credentials or not a client"}, status=status.HTTP_401_UNAUTHORIZED)
 
 class ClientLogoutView(APIView):

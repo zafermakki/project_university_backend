@@ -11,7 +11,7 @@ class ProductModelSerializer(serializers.ModelSerializer):
     class Meta:
         model= Product
         fields = [
-            'id', 'name', 'sub_category', 'description', 
+            'id', 'name', 'sub_category','release_date','games_type','description', 
             'price', 'image_path', 'video_url', 'quantity',
             'average_rating'  # Include the overall rating field
         ]

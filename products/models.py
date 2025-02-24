@@ -28,8 +28,14 @@ class SubCategory(models.Model):
 
 # النموذج الخاص بالمنتجات
 class Product(models.Model):
+    GAME_TYPE_CHOICES = [
+        ('offline', 'Offline'),
+        ('online', 'Online'),
+    ]
     name = models.CharField(max_length=250)
     sub_category = models.ForeignKey(SubCategory, on_delete=models.CASCADE, related_name="products",default=1)
+    release_date = models.DateField(null=True, blank=True)
+    games_type = models.CharField(max_length=255,choices=GAME_TYPE_CHOICES,null=True,blank=True)
     description = models.TextField(default="", blank=True)
     price = models.DecimalField(max_digits=20, decimal_places=4)
     image_path = models.ImageField(upload_to='products/')

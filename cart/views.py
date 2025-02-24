@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
+from django.db.models import Sum
 from .serializers import CartCreateSerializer, CartSer,PurchaseSerializer,CartProductUpdateSerializer
 from .models import CartProduct,Purchase
 
@@ -110,3 +111,14 @@ def get_purchases_by_customer(request, customer_id):
     
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def top_purchased_products(request):
+    top_products = (
+        Purchase.objects.values('product__id','product__name', 'product__image_path')
+        .annotate(total_quantity= Sum('quantity'))
+        .order_by('-total_quantity')[:10]
+    )
+    
+    return Response(top_products)
