@@ -227,3 +227,13 @@ def online_games(request):
     online_products = Product.objects.filter(games_type__icontains='online')
     serializer = ProductModelSerializer(online_products, many=True)
     return Response(serializer.data)
+
+@api_view(['GET'])
+def get_discounted_products(request):
+    discounted_products = Product.objects.filter(discount_percentage__gt=0)
+    
+    if discounted_products.exists():
+        serializer = ProductModelSerializer(discounted_products, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return Response({"message": "there are not products with a resolution"}, status=status.HTTP_404_NOT_FOUND)

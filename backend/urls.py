@@ -25,7 +25,8 @@ urlpatterns = [
     path('api-token-auth/', views.obtain_auth_token),
     path('api/auth/', include('users.urls')),
     path('api/products/', include('products.urls')),
-    path('api/products/' , include('newgames.urls'))
+    path('api/products/' , include('newgames.urls')),
+    path('api/' , include('news.urls'))
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

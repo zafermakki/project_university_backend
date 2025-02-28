@@ -91,5 +91,6 @@ class CartSer(serializers.Serializer):
         source='product.sub_category.name'
     )
     price = serializers.DecimalField(max_digits=20, decimal_places=4, source='product.price')
+    final_price = serializers.DecimalField(max_digits=20, decimal_places=4, source='product.final_price', read_only=True)
     image_path = serializers.CharField(max_length=250, source='product.image_path')
     quantity = serializers.IntegerField()

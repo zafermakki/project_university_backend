@@ -20,9 +20,9 @@ class ProductRatingAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'sub_category','price', 'average_rating', 'quantity')
+    list_display = ('name', 'sub_category','price','discount_percentage','final_price' ,'average_rating', 'quantity')
 
     fields = ('name', 'average_rating', 'sub_category','release_date','games_type', 'description',
-              'price', 'image_path', 'video_url', 'quantity')
+              'price', 'discount_percentage','final_price','image_path', 'video_url', 'quantity')
 
-    readonly_fields = ('average_rating',)
+    readonly_fields = ('average_rating','final_price')

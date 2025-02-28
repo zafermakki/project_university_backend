@@ -38,6 +38,12 @@ class Product(models.Model):
     games_type = models.CharField(max_length=255,choices=GAME_TYPE_CHOICES,null=True,blank=True)
     description = models.TextField(default="", blank=True)
     price = models.DecimalField(max_digits=20, decimal_places=4)
+    discount_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        help_text="the percentage of discount on the product"
+    )
     image_path = models.ImageField(upload_to='products/')
     video_url = models.URLField(max_length=200, blank=True, null=True)
     quantity = models.IntegerField(default=0)
@@ -53,6 +59,12 @@ class Product(models.Model):
         """يحساب المتوسط لجميع تقييمات اللعبة"""
         avg = self.ratings.aggregate(average=Avg('rating'))['average']
         return round(avg, 2) if avg else 0
+    
+    @property
+    def final_price(self):
+        """the final price"""
+        discount_value = (self.discount_percentage / 100) * self.price
+        return self.price - discount_value
     
 class ProductRating(models.Model):
     RATING_CHOICES = [

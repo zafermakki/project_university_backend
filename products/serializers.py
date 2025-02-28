@@ -8,12 +8,13 @@ class CategoryModelSerializer(serializers.ModelSerializer):
         
 class ProductModelSerializer(serializers.ModelSerializer):
     average_rating = serializers.ReadOnlyField()
+    final_price = serializers.ReadOnlyField()
     class Meta:
         model= Product
         fields = [
             'id', 'name', 'sub_category','release_date','games_type','description', 
-            'price', 'image_path', 'video_url', 'quantity',
-            'average_rating'  # Include the overall rating field
+            'price', 'discount_percentage','image_path', 'video_url', 'quantity',
+            'average_rating','final_price'  # Include the overall rating field
         ]
         
 class SubCategoryModelSerializer(serializers.ModelSerializer):
