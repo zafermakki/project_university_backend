@@ -35,13 +35,13 @@ class ResendVerificationEmailView(APIView):
         try:
             pending_user = PendingUser.objects.get(email=email)
         except PendingUser.DoesNotExist:
-            return Response({"message": "هذا البريد الإلكتروني غير مسجل أو تم تفعيله مسبقًا."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "this email is not registered or has been activated in advance."}, status=status.HTTP_400_BAD_REQUEST)
 
         if pending_user.created_at + timedelta(minutes=5) > now():
-            return Response({"message": "تم إرسال رمز التحقق مؤخرًا. يرجى المحاولة لاحقًا."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "The verification code has been sent recently,please try later."}, status=status.HTTP_400_BAD_REQUEST)
 
         send_verification_email(pending_user)
-        return Response({"message": "تم إرسال رمز التحقق مرة أخرى. يرجى التحقق من بريدك الإلكتروني."}, status=status.HTTP_200_OK)
+        return Response({"message": "The verification code has been sent again, please check your email."}, status=status.HTTP_200_OK)
 
 # رابط التحقق و ادخال الرموز ال 6
 class VerifyCodeView(APIView):
@@ -54,10 +54,10 @@ class VerifyCodeView(APIView):
         try:
             pending_user = PendingUser.objects.get(email=email)
         except PendingUser.DoesNotExist:
-            return Response({"message": "هذا البريد الإلكتروني غير مسجل."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "This email is not registered."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not pending_user.is_code_valid(code):
-            return Response({"message": "رمز التحقق غير صالح أو منتهي الصلاحية."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "The verification code is incorrect or expired."}, status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.create_user(
             username=pending_user.username,
@@ -69,7 +69,7 @@ class VerifyCodeView(APIView):
         user.save()
         pending_user.delete()
 
-        return Response({"message": "تم تفعيل الحساب بنجاح."}, status=status.HTTP_200_OK)
+        return Response({"message": "The account was successfully activated."}, status=status.HTTP_200_OK)
 
 
 class RequestPasswordResetView(APIView):
@@ -81,14 +81,14 @@ class RequestPasswordResetView(APIView):
 
         if len(new_password) < 8:
             return Response(
-                {"message": "يجب اقل شيء 8 محارف لكلمة المرور"},
+                {"message": "The password must be 8 or more letters."},
                 status= status.HTTP_400_BAD_REQUEST
             )
         
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({"message": "هذا البريد الإلكتروني غير مسجل."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "This email is not registered."}, status=status.HTTP_400_BAD_REQUEST)
 
         # إنشاء رمز تحقق
         verification_code = ''.join(random.choices(string.digits, k=6))
@@ -98,11 +98,11 @@ class RequestPasswordResetView(APIView):
         user.save()
 
         # إرسال البريد الإلكتروني
-        subject = "إعادة تعيين كلمة المرور"
-        message = f"رمز التحقق الخاص بك هو: {verification_code}\nيرجى إدخاله خلال 5 دقائق."
+        subject = "password reset"
+        message = f"your verification code is: {verification_code}\n Please enter it within 5 minutes."
         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
 
-        return Response({"message": "تم إرسال رمز التحقق إلى بريدك الإلكتروني."}, status=status.HTTP_200_OK)
+        return Response({"message": "The verification code has been sent to your email."}, status=status.HTTP_200_OK)
 
 class VerifyAndResetPasswordView(APIView):
     permission_classes = [AllowAny]
@@ -114,11 +114,11 @@ class VerifyAndResetPasswordView(APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            return Response({"message": "هذا البريد الإلكتروني غير مسجل."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "This email is not registered."}, status=status.HTTP_400_BAD_REQUEST)
 
         # التحقق من الرمز وصلاحيته
         if user.verification_code != code or user.code_expiration < now():
-            return Response({"message": "رمز التحقق غير صالح أو منتهي الصلاحية."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "The verification code is incorrect or expired."}, status=status.HTTP_400_BAD_REQUEST)
 
         # تحديث كلمة المرور
         if user.temp_password:
@@ -127,9 +127,9 @@ class VerifyAndResetPasswordView(APIView):
             user.verification_code = None  # إزالة الرمز
             user.code_expiration = None
             user.save()
-            return Response({"message": "تم تحديث كلمة المرور بنجاح."}, status=status.HTTP_200_OK)
+            return Response({"message": "The password has been successfully updated."}, status=status.HTTP_200_OK)
         else:
-            return Response({"message": "لم يتم تقديم كلمة مرور جديدة."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "A new password has not been presented."}, status=status.HTTP_400_BAD_REQUEST)
 
 # Admin API  
 
@@ -142,12 +142,12 @@ class AdminRegisterView(APIView):
         
         if len(data['password']) < 8:
             return Response(
-                {"message": "يجب أن تكون كلمة المرور مكونة من 8 محارف على الأقل"},
+                {"message": "The password must be 8 or more letters."},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
         if User.objects.filter(email=data['email']).exists():
-            return Response({"message": "هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول"},status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "This email is already registered please login."},status=status.HTTP_400_BAD_REQUEST)
         # البحث عن سجل موجود بنفس البريد الإلكتروني
         pending_user, created = PendingUser.objects.get_or_create(
             email=data['email'],
@@ -160,7 +160,7 @@ class AdminRegisterView(APIView):
         if not created:
             # إذا لم يتم إنشاء سجل جديد، تحقق من انتهاء صلاحية السجل القديم
             if pending_user.created_at + timedelta(minutes=5) > now():
-                return Response({"message": "يرجى الانتظار حتى تنتهي صلاحية المحاولة السابقة."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "Please wait until the previouse attempt ends."}, status=status.HTTP_400_BAD_REQUEST)
             # تحديث السجل القديم
             pending_user.username = data['username']
             pending_user.password = data['password']
@@ -168,7 +168,7 @@ class AdminRegisterView(APIView):
             pending_user.save()
 
         send_verification_email(pending_user)
-        return Response({"message": "تم ارسال رمز التحقق الى بريدك الالكتروني. يرجى تأكيد بريدك الإلكتروني خلال 5 دقائق."}, status=status.HTTP_200_OK)
+        return Response({"message": "The verification code has been sent to your email, please confirm your email within 5 minutes."}, status=status.HTTP_200_OK)
 
 
 class AdminLoginView(APIView):
@@ -206,12 +206,12 @@ class ClientRegisterView(APIView):
         
         if len(data['password']) < 8:
             return Response(
-                {"message": "يجب أن تكون كلمة المرور مكونة من 8 محارف على الأقل"},
+                {"message": "The password must be 8 or more letters"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if User.objects.filter(email=data['email']).exists():
-            return Response({"message": "هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "This email is already registered please login."}, status=status.HTTP_400_BAD_REQUEST)
 
         pending_user, created = PendingUser.objects.get_or_create(
             email=data['email'],
@@ -224,14 +224,14 @@ class ClientRegisterView(APIView):
 
         if not created:
             if pending_user.created_at + timedelta(minutes=5) > now():
-                return Response({"message": "يرجى الانتظار حتى تنتهي صلاحية المحاولة السابقة."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "Please wait until the previouse attempt ends."}, status=status.HTTP_400_BAD_REQUEST)
             pending_user.username = data['username']
             pending_user.password = data['password']
             pending_user.created_at = now()
             pending_user.save()
 
         send_verification_email(pending_user)
-        return Response({"message": "تم إرسال رمز التحقق. يرجى إدخاله خلال 5 دقائق."}, status=status.HTTP_200_OK)
+        return Response({"message": "The verification code has been sent to your email, please enter it within 5 minutes."}, status=status.HTTP_200_OK)
 
 
 class ClientLoginView(APIView):
