@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
+# from rest_framework import viewsets
 from django.db.models import Sum
 
 from decimal import Decimal
@@ -132,7 +133,7 @@ def searchRecommendations(request):
         top_query = search_queries.first().query_text
 
     # استخدام أعلى عبارة بحث كمدخل لخوارزمية التوصية
-    recommended_products = get_content_based_recommendations(top_query, subcategory.id, Product, top_n=5)
+    recommended_products = get_content_based_recommendations(top_query, subcategory.id, Product, top_n=6)
     if not recommended_products:
         return Response({"detail": "لا توجد منتجات موصى بها."}, status=status.HTTP_404_NOT_FOUND)
     
@@ -237,3 +238,7 @@ def get_discounted_products(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return Response({"message": "there are not products with a resolution"}, status=status.HTTP_404_NOT_FOUND)
+    
+# class CategoryViewSet(viewsets.ModelViewSet):
+#     queryset = Category.objects.all()
+#     serializer_class = CategoryModelSerializer

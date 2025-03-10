@@ -1,17 +1,9 @@
-# utils.py
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
 def get_content_based_recommendations(query, subcategory_id, Product, top_n=5):
-    """
-    دالة توصية تعتمد على المحتوى:
-    - جلب جميع المنتجات من القسم الفرعي.
-    - دمج الحقول المهمة: اسم المنتج، الوصف، اسم القسم الفرعي واسم القسم الرئيسي.
-    - حساب تمثيل TF-IDF للنصوص وحساب التشابه الكوني مع الاستعلام.
-    - إرجاع أعلى المنتجات من حيث التشابه.
-    """
     products = Product.objects.filter(sub_category_id=subcategory_id)
     if not products.exists():
         return []

@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from django.utils import timezone
 from django.contrib.auth import authenticate
 from .models import User,PendingUser
 from django.core.mail import send_mail
@@ -242,8 +243,12 @@ class ClientLoginView(APIView):
         password = request.data.get('password')
         user = authenticate(username=email, password=password)
         if user and user.is_client:  # التأكد من أن المستخدم عميل
+            first_login = user.last_login is None
             token, created = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key, "user_id": user.id,"username": user.username}, status=status.HTTP_200_OK)
+            if first_login:
+                user.last_login = timezone.now()
+                user.save(update_fields=['last_login'])
+            return Response({"token": token.key, "user_id": user.id,"username": user.username,"first_login": first_login}, status=status.HTTP_200_OK)
         return Response({"error": "Invalid credentials or not a client"}, status=status.HTTP_401_UNAUTHORIZED)
 
 class ClientLogoutView(APIView):

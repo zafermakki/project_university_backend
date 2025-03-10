@@ -1,7 +1,7 @@
 from django.contrib import admin
-from .models import User,PendingUser
+from .models import User
 
-admin.site.register(PendingUser)
+# admin.site.register(PendingUser)
 
 # فلتر مخصص لعرض الزبائن أو المدراء فقط
 class UserFilter(admin.SimpleListFilter):

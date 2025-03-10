@@ -62,13 +62,18 @@ class Product(models.Model):
     
     @property
     def final_price(self):
-        """the final price"""
-        discount_value = (self.discount_percentage / 100) * self.price
+        """The final price after discount."""
+        # إذا كان السعر غير موجود، يرجع 0 لتجنب الخطأ
+        if self.price is None:
+            return 0
+    # استخدام الخصم أو القيمة 0 في حالة عدم وجوده
+        discount = self.discount_percentage if self.discount_percentage is not None else 0
+        discount_value = (discount / 100) * self.price
         return self.price - discount_value
     
 class ProductRating(models.Model):
     RATING_CHOICES = [
-        (Decimal(i/2).quantize(Decimal('0.0')), f"{i/2} نجمة")
+        (Decimal(i/2).quantize(Decimal('0.0')), f"{i/2} ")
         for i in range(2, 11)  # 2/2=1.0, 3/2=1.5, ... , 10/2=5.0
     ]
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='ratings')

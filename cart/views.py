@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -39,36 +40,37 @@ def deleteCartItem(request, product_id):
 @api_view(['POST'])
 def complete_purchase(request, customer_id):
     try:
+        with transaction.atomic():
         # Get cart products for the customer
-        cart_products = CartProduct.objects.filter(cart__customer__id=customer_id)
+            cart_products = CartProduct.objects.select_for_update().filter(cart__customer__id=customer_id)
 
-        if not cart_products.exists():
-            return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+            if not cart_products.exists():
+                return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check if there is enough stock for each product
-        for cart_product in cart_products:
-            if cart_product.quantity > cart_product.product.quantity:
-                # Return the remaining quantity available for this product
-                remaining_quantity = cart_product.product.quantity
-                return Response({
-                    "error": f"Not enough stock for {cart_product.product.name}. Available: {remaining_quantity}"
-                }, status=status.HTTP_400_BAD_REQUEST)
+            # Check if there is enough stock for each product
+            for cart_product in cart_products:
+                if cart_product.quantity > cart_product.product.quantity:
+                    # Return the remaining quantity available for this product
+                    remaining_quantity = cart_product.product.quantity
+                    return Response({
+                        "error": f"Not enough stock for {cart_product.product.name}. Available: {remaining_quantity}"
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create a purchase record for each product in the cart
-        for cart_product in cart_products:
-            Purchase.objects.create(
-                customer=cart_product.cart.customer,
-                product=cart_product.product,
-                quantity=cart_product.quantity
-            )
-            # Reduce product stock
-            cart_product.product.quantity -= cart_product.quantity
-            cart_product.product.save()
+            # Create a purchase record for each product in the cart
+            for cart_product in cart_products:
+                Purchase.objects.create(
+                    customer=cart_product.cart.customer,
+                    product=cart_product.product,
+                    quantity=cart_product.quantity
+                )
+                # Reduce product stock
+                cart_product.product.quantity -= cart_product.quantity
+                cart_product.product.save()
 
-        # Clear cart after successful purchase
-        cart_products.delete()
+            # Clear cart after successful purchase
+            cart_products.delete()
 
-        return Response({"message": "Purchase completed successfully"}, status=status.HTTP_200_OK)
+            return Response({"message": "Purchase completed successfully"}, status=status.HTTP_200_OK)
 
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
