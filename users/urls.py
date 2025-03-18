@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RequestPasswordResetView,VerifyAndResetPasswordView,AdminRegisterView,ResendVerificationEmailView,VerifyCodeView, AdminLoginView,AdminLogoutView,ClientRegisterView, ClientLoginView, ClientLogoutView
+from .views import RequestPasswordResetView,VerifyAndResetPasswordView,AdminRegisterView,ResendVerificationEmailView,VerifyCodeView, AdminLoginView,AdminLogoutView,ClientRegisterView, ClientLoginView, ClientLogoutView,UserListView, UpdateUserPermissionsView,UserDetailView
 
 
 urlpatterns = [
@@ -15,4 +15,8 @@ urlpatterns = [
     # forget password 
     path('password-reset/', RequestPasswordResetView.as_view(), name='password-reset'),
     path('make-reset/', VerifyAndResetPasswordView.as_view(), name='make-reset'),
+    # admin pages
+    path('users/', UserListView.as_view(), name='user-list'),
+    path('users/<uuid:pk>/update/', UpdateUserPermissionsView.as_view(), name='user-permissions-update'),
+    path('user/<uuid:id>/', UserDetailView.as_view(), name='user-detail')
 ]

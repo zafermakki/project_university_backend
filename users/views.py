@@ -3,6 +3,12 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
+from .permissions import IsSuperUser
+from .serializers import UsersSerializer
+from .serializers import UserDetailSerializer
+from rest_framework.permissions import IsAdminUser
 from django.utils import timezone
 from django.contrib.auth import authenticate
 from .models import User,PendingUser
@@ -263,3 +269,37 @@ class ClientLogoutView(APIView):
                 return Response({"error": "Not a client"}, status=status.HTTP_400_BAD_REQUEST)
         except Token.DoesNotExist:
             return Response({"error": "Invalid token or already logged out"}, status=status.HTTP_400_BAD_REQUEST)
+        
+# admin pages
+
+class UserListView(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UsersSerializer
+    permission_classes = [IsAdminUser] 
+    
+class UpdateUserPermissionsView(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UsersSerializer
+    permission_classes = [IsAuthenticated, IsSuperUser]  # فقط superuser مسموح له
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        is_staff = request.data.get('is_staff')
+        is_superuser = request.data.get('is_superuser')
+        is_active = request.data.get('is_active')
+
+        if is_staff is not None:
+            user.is_staff = is_staff
+        if is_superuser is not None:
+            user.is_superuser = is_superuser
+        if is_active is not None:
+            user.is_active = is_active
+
+        user.save()
+        return Response({"message": "تم تحديث الصلاحيات بنجاح!"})
+    
+class UserDetailView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserDetailSerializer
+    permission_classes = [IsAuthenticated]  # يسمح فقط للمستخدمين المسجلين بالوصول
+    lookup_field = 'id'
