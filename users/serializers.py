@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import User
 from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import Permission
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,3 +31,13 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'is_staff', 'is_superuser', 'is_active',
             'last_login', 'date_joined', 'is_client'
         ]
+        
+class UserPermissionSerializer(serializers.ModelSerializer):
+    permissions = serializers.PrimaryKeyRelatedField(
+        queryset=Permission.objects.all(),
+        many=True
+    )
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'permissions']

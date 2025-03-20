@@ -1,10 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 from .permissions import IsSuperUser
 from .serializers import UsersSerializer
 from .serializers import UserDetailSerializer
@@ -12,6 +14,8 @@ from rest_framework.permissions import IsAdminUser
 from django.utils import timezone
 from django.contrib.auth import authenticate
 from .models import User,PendingUser
+from .serializers import UserPermissionSerializer
+from django.contrib.auth.models import Permission
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.timezone import now
@@ -287,6 +291,12 @@ class UpdateUserPermissionsView(generics.UpdateAPIView):
         is_staff = request.data.get('is_staff')
         is_superuser = request.data.get('is_superuser')
         is_active = request.data.get('is_active')
+        
+        if is_staff and user.is_client:
+            return Response(
+                {"error": "you can do that for a client"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if is_staff is not None:
             user.is_staff = is_staff
@@ -303,3 +313,55 @@ class UserDetailView(generics.RetrieveAPIView):
     serializer_class = UserDetailSerializer
     permission_classes = [IsAuthenticated]  # يسمح فقط للمستخدمين المسجلين بالوصول
     lookup_field = 'id'
+
+class UpdateAdminPermissions(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserPermissionSerializer
+    permission_classes = [IsAuthenticated,IsSuperUser]
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+
+        permissions = request.data.get('permissions', [])
+        print("الصلاحيات المطلوبة:", permissions)
+
+        permission_objects = Permission.objects.filter(id__in=permissions)
+        print("الصلاحيات الفعلية الموجودة في قاعدة البيانات:", permission_objects)
+
+        if permission_objects.count() != len(permissions):
+            return Response({"error": "بعض الصلاحيات غير موجودة في النظام."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.user_permissions.set(permission_objects)
+        user.save()
+
+        print("الصلاحيات بعد التحديث:", user.user_permissions.all())
+
+        return Response({"message": "تم تحديث الصلاحيات بنجاح!"}, status=status.HTTP_200_OK)
+
+
+class PermissionsListView(APIView):
+    def get(self, request):
+        permissions = Permission.objects.values('id', 'name')
+        return Response(permissions)
+    
+# details of user
+@api_view(['Get'])
+def get_logged_in_user(request):
+    serializer =UsersSerializer(request.user)
+    return Response(serializer.data)
+
+# delete user from superuser
+@api_view(['DELETE'])
+def delete_user(request, user_id):
+    if not request.user.is_superuser:
+        return Response(
+            {"detail": "you don't have a permission"},
+            status= status.HTTP_403_FORBIDDEN
+        )
+    user = get_object_or_404(User, id=user_id)
+    user.delete()
+    return Response(
+            {"detail": "user was successfully deleted"},
+            status=status.HTTP_204_NO_CONTENT
+        )
+    

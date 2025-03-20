@@ -31,10 +31,10 @@ class User(AbstractUser, PermissionsMixin):
     code_expiration = models.DateTimeField(null=True, blank=True)
     temp_password = models.CharField(max_length=128, null=True, blank=True)  
     groups = models.ManyToManyField(
-        Group, related_name= 'users', related_query_name= 'user' 
+        Group, related_name= 'users', related_query_name= 'user',blank=True 
     )
-    Permissions = models.ManyToManyField(
-        Permission, related_name= 'users', related_query_name= 'user' 
+    user_permissions = models.ManyToManyField(
+        Permission, related_name='users', related_query_name='user', blank=True
     )
     
     is_superuser = models.BooleanField(default= False)
