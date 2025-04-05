@@ -1,10 +1,11 @@
 from django.urls import path,include
-# from rest_framework import routers
+from rest_framework.routers import DefaultRouter
 from . import views
-# from .views import CategoryViewSet
+from .views import CategoryViewSet, SubCategoryViewSet
 
-# router = routers.DefaultRouter()
-# router.register(r'api/categories', CategoryViewSet, basename='category')
+router = DefaultRouter()
+router.register(r'allcategories', CategoryViewSet)
+router.register(r'allsubcategories', SubCategoryViewSet)
 
 urlpatterns = [
     path('categories/', view= views.getCategories),
@@ -23,5 +24,6 @@ urlpatterns = [
     path('my-rating/<int:product_id>/', views.get_user_rating, name='get_user_rating'),
     path('<int:id>/', view= views.getProductsByCatId),
     path('', view= views.getProducts),
-    # path('', include(router.urls)),
+    
+    path('', include(router.urls)),
 ]

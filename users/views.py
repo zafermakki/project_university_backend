@@ -294,7 +294,7 @@ class UpdateUserPermissionsView(generics.UpdateAPIView):
         
         if is_staff and user.is_client:
             return Response(
-                {"error": "you can do that for a client"},
+                {"error": "you can't do that for a client"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -321,6 +321,9 @@ class UpdateAdminPermissions(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         user = self.get_object()
+        
+        if user.is_client:
+            return Response({"error": "you can't do this operation for a client"},status=status.HTTP_403_FORBIDDEN)
 
         permissions = request.data.get('permissions', [])
         print("الصلاحيات المطلوبة:", permissions)
@@ -338,6 +341,13 @@ class UpdateAdminPermissions(generics.UpdateAPIView):
 
         return Response({"message": "تم تحديث الصلاحيات بنجاح!"}, status=status.HTTP_200_OK)
 
+class UserPermissionsView(generics.RetrieveAPIView):
+    def get(self, request, *args, **kwargs):
+        user_id = kwargs.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        
+        permission = user.user_permissions.values('id', 'codename', 'name')
+        return Response({"permissions": list(permission)}, status=200)
 
 class PermissionsListView(APIView):
     def get(self, request):

@@ -18,6 +18,7 @@ class ProductModelSerializer(serializers.ModelSerializer):
         ]
         
 class SubCategoryModelSerializer(serializers.ModelSerializer):
+    parent_category = serializers.CharField(source='parent_category.name', read_only=True)
     class Meta:
         model= SubCategory
         fields= '__all__'

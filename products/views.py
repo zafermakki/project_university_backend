@@ -3,6 +3,8 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 # from rest_framework import viewsets
 from django.db.models import Sum
+from rest_framework import viewsets, permissions
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from decimal import Decimal
 from django.shortcuts import get_object_or_404
@@ -242,3 +244,22 @@ def get_discounted_products(request):
 # class CategoryViewSet(viewsets.ModelViewSet):
 #     queryset = Category.objects.all()
 #     serializer_class = CategoryModelSerializer
+
+
+# admin page
+class IsSuperUser(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user and request.user.is_superuser
+    
+class CategoryViewSet(viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategoryModelSerializer
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [IsSuperUser]
+    
+class SubCategoryViewSet(viewsets.ModelViewSet):
+    queryset = SubCategory.objects.all()
+    serializer_class = SubCategoryModelSerializer
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [IsSuperUser]
+    
