@@ -1,11 +1,12 @@
 from django.urls import path,include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import CategoryViewSet, SubCategoryViewSet
+from .views import CategoryViewSet, SubCategoryViewSet,ProductViewSet,GameTypeChoicesView
 
 router = DefaultRouter()
 router.register(r'allcategories', CategoryViewSet)
 router.register(r'allsubcategories', SubCategoryViewSet)
+router.register(r'allproducts', ProductViewSet)
 
 urlpatterns = [
     path('categories/', view= views.getCategories),
@@ -13,6 +14,7 @@ urlpatterns = [
     path('offline_games/', view = views.offline_games),
     path('online_games/', view = views.online_games),
     path('discounted/', view = views.get_discounted_products),
+    path('games-types/', GameTypeChoicesView.as_view(), name='games-types'),
     path('search/<int:subcategory_id>/', views.searchProducts, name='search_products'),
     path('rate-product/<int:product_id>/', views.rate_product, name='rate_product'),
     path('subcategories/prodcuts/<int:subcategory_id>/', view= views.getProductsBySubCategoryId),

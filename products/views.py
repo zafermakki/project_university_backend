@@ -1,5 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from rest_framework import status
 # from rest_framework import viewsets
 from django.db.models import Sum
@@ -263,3 +264,16 @@ class SubCategoryViewSet(viewsets.ModelViewSet):
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [IsSuperUser]
     
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductModelSerializer
+    parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [IsSuperUser]
+    
+class GameTypeChoicesView(APIView):
+    def get(self, request):
+        game_types = [
+            {"value": value, "label": label}
+            for value, label in Product.GAME_TYPE_CHOICES
+        ]
+        return Response(game_types)
