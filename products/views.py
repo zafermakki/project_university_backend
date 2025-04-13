@@ -2,6 +2,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework import status
+from rest_framework import generics
 # from rest_framework import viewsets
 from django.db.models import Sum
 from rest_framework import viewsets, permissions
@@ -277,3 +278,8 @@ class GameTypeChoicesView(APIView):
             for value, label in Product.GAME_TYPE_CHOICES
         ]
         return Response(game_types)
+    
+class ProductRatingListView(generics.ListAPIView):
+    queryset = ProductRating.objects.all()
+    serializer_class = ProductRatingSerializer
+    

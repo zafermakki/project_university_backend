@@ -28,6 +28,10 @@ class ProductModelSerializer(serializers.ModelSerializer):
         
         
 class ProductRatingSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField()
+    product = serializers.StringRelatedField()
     class Meta:
         model = ProductRating
-        fields = ['rating']
+        fields = ['id', 'product', 'user', 'rating', 'created_at']
+        
+        
