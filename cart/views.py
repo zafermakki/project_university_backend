@@ -1,9 +1,10 @@
 from django.db import transaction
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework import generics
 from rest_framework import status
 from django.db.models import Sum
-from .serializers import CartCreateSerializer, CartSer,PurchaseSerializer,CartProductUpdateSerializer
+from .serializers import CartCreateSerializer, CartSer,PurchaseSerializer,CartProductUpdateSerializer,TablePurchaseSerializer
 from .models import CartProduct,Purchase
 
 
@@ -124,3 +125,8 @@ def top_purchased_products(request):
     )
     
     return Response(top_products)
+
+# admin pages
+class PurchaseListView(generics.ListAPIView):
+    queryset = Purchase.objects.all()
+    serializer_class = TablePurchaseSerializer
