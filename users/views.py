@@ -5,7 +5,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated,BasePermission
 from django.shortcuts import get_object_or_404
 from .permissions import IsSuperUser
 from .serializers import UsersSerializer
@@ -276,10 +276,23 @@ class ClientLogoutView(APIView):
         
 # admin pages
 
+class HasDynamicPermission(BasePermission):
+    def has_permission(self, request, view):
+        required_permission = getattr(view, 'required_permission', None)
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            (
+                request.user.is_superuser or 
+                (required_permission and request.user.has_perm(required_permission))
+            )
+        )
+
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UsersSerializer
-    permission_classes = [IsAdminUser] 
+    permission_classes = [HasDynamicPermission] 
+    required_permission = 'users.view_user'
     
 class UpdateUserPermissionsView(generics.UpdateAPIView):
     queryset = User.objects.all()

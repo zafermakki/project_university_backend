@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import generics
 from rest_framework import status
+from rest_framework.permissions import BasePermission
 from django.db.models import Sum
 from .serializers import CartCreateSerializer, CartSer,PurchaseSerializer,CartProductUpdateSerializer,TablePurchaseSerializer
 from .models import CartProduct,Purchase
@@ -127,6 +128,20 @@ def top_purchased_products(request):
     return Response(top_products)
 
 # admin pages
+class HasDynamicPermission(BasePermission):
+    def has_permission(self, request, view):
+        required_permission = getattr(view, 'required_permission', None)
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            (
+                request.user.is_superuser or 
+                (required_permission and request.user.has_perm(required_permission))
+            )
+        )
+
 class PurchaseListView(generics.ListAPIView):
     queryset = Purchase.objects.all()
     serializer_class = TablePurchaseSerializer
+    permission_classes = [HasDynamicPermission] 
+    required_permission = 'cart.view_purchase'

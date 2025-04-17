@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework import generics
+from rest_framework.permissions import BasePermission
 # from rest_framework import viewsets
 from django.db.models import Sum
 from rest_framework import viewsets, permissions
@@ -249,27 +250,58 @@ def get_discounted_products(request):
 
 
 # admin page
-class IsSuperUser(permissions.BasePermission):
+class HasDynamicPermission(BasePermission):
     def has_permission(self, request, view):
-        return request.user and request.user.is_superuser
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        if request.user.is_superuser:
+            return True
+
+        # ربط نوع العملية بالسماحية المطلوبة
+        action_permission_map = {
+            'list': 'view',
+            'retrieve': 'view',
+            'create': 'add',
+            'update': 'change',
+            'partial_update': 'change',
+            'destroy': 'delete',
+        }
+
+        # اسم الموديل
+        model_name = view.queryset.model._meta.model_name
+        app_label = view.queryset.model._meta.app_label
+
+        # نوع العملية المطلوبة (action)
+        action = getattr(view, 'action', None)
+        required_action = action_permission_map.get(action)
+
+        if not required_action:
+            return False
+
+        # السماحية المطلوبة مثل: products.view_category
+        perm_code = f"{app_label}.{required_action}_{model_name}"
+
+        return request.user.has_perm(perm_code)
+
     
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategoryModelSerializer
     parser_classes = (MultiPartParser, FormParser)
-    permission_classes = [IsSuperUser]
+    permission_classes = [HasDynamicPermission]
     
 class SubCategoryViewSet(viewsets.ModelViewSet):
     queryset = SubCategory.objects.all()
     serializer_class = SubCategoryModelSerializer
     parser_classes = (MultiPartParser, FormParser)
-    permission_classes = [IsSuperUser]
+    permission_classes = [HasDynamicPermission]
     
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductModelSerializer
     parser_classes = (MultiPartParser, FormParser)
-    permission_classes = [IsSuperUser]
+    permission_classes = [HasDynamicPermission]
     
 class GameTypeChoicesView(APIView):
     def get(self, request):
@@ -279,7 +311,21 @@ class GameTypeChoicesView(APIView):
         ]
         return Response(game_types)
     
+class HasDynamicProductRatingPermission(BasePermission):
+    def has_permission(self, request, view):
+        required_permission = getattr(view, 'required_permission', None)
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            (
+                request.user.is_superuser or 
+                (required_permission and request.user.has_perm(required_permission))
+            )
+        )
+        
 class ProductRatingListView(generics.ListAPIView):
     queryset = ProductRating.objects.all()
     serializer_class = ProductRatingSerializer
+    permission_classes = [HasDynamicProductRatingPermission] 
+    required_permission = 'products.view_productrating'
     
