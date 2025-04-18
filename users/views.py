@@ -12,7 +12,7 @@ from .serializers import UsersSerializer
 from .serializers import UserDetailSerializer
 from rest_framework.permissions import IsAdminUser
 from django.utils import timezone
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate,login
 from .models import User,PendingUser
 from .serializers import UserPermissionSerializer
 from django.contrib.auth.models import Permission
@@ -20,6 +20,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.timezone import now
 from datetime import timedelta
+from django.db.models import Q
 import random
 import string
 from django.conf import settings
@@ -193,6 +194,7 @@ class AdminLoginView(APIView):
         if user:
             if user.is_client:
                 return Response({"error": "Clients are not allowed to log in from this link"}, status=status.HTTP_403_FORBIDDEN)
+            login(request, user)
             token, created = Token.objects.get_or_create(user=user)
             return Response({"token": token.key, "user_id": user.id}, status=status.HTTP_200_OK)
         return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -254,10 +256,8 @@ class ClientLoginView(APIView):
         user = authenticate(username=email, password=password)
         if user and user.is_client:  # التأكد من أن المستخدم عميل
             first_login = user.last_login is None
+            login(request, user)
             token, created = Token.objects.get_or_create(user=user)
-            if first_login:
-                user.last_login = timezone.now()
-                user.save(update_fields=['last_login'])
             return Response({"token": token.key, "user_id": user.id,"username": user.username,"first_login": first_login}, status=status.HTTP_200_OK)
         return Response({"error": "Invalid credentials or not a client"}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -364,7 +364,12 @@ class UserPermissionsView(generics.RetrieveAPIView):
 
 class PermissionsListView(APIView):
     def get(self, request):
-        permissions = Permission.objects.values('id', 'name')
+        full_permissions_models  = ['category', 'product','subCategory','news','newGames'] # Permissions will only appear for these tables
+        view_only_models = ['productRating', 'purchase','user']
+        permissions = Permission.objects.filter(
+            Q(content_type__model__in=full_permissions_models) |
+            Q(content_type__model__in=view_only_models, name__startswith='Can view')
+        ).values('id', 'name')
         return Response(permissions)
     
 # details of user
