@@ -1,7 +1,7 @@
 from django.urls import path,include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import CategoryViewSet, SubCategoryViewSet,ProductViewSet,GameTypeChoicesView,ProductRatingListView
+from .views import CategoryViewSet, SubCategoryViewSet,ProductViewSet,GameTypeChoicesView,ProductRatingListView,ProductSearchView
 
 router = DefaultRouter()
 router.register(r'allcategories', CategoryViewSet)
@@ -14,6 +14,7 @@ urlpatterns = [
     path('offline_games/', view = views.offline_games),
     path('online_games/', view = views.online_games),
     path('discounted/', view = views.get_discounted_products),
+    path('all/search/', ProductSearchView.as_view(), name='product-search'),
     path('rating/', ProductRatingListView.as_view(), name='product-ratings'),
     path('games-types/', GameTypeChoicesView.as_view(), name='games-types'),
     path('search/<int:subcategory_id>/', views.searchProducts, name='search_products'),

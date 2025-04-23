@@ -393,3 +393,15 @@ def delete_user(request, user_id):
             status=status.HTTP_204_NO_CONTENT
         )
     
+class UserSearchView(generics.ListAPIView):
+    serializer_class = UsersSerializer
+    permission_classes = [HasDynamicPermission] 
+    required_permission = 'users.view_user'
+
+    def get_queryset(self):
+        query = self.request.query_params.get('q', None)
+        if query:
+            return User.objects.filter(
+                Q(username__icontains=query) | Q(email__icontains=query)
+            )
+        return User.objects.none()

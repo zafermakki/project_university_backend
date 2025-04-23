@@ -96,54 +96,65 @@ def searchProducts(request, subcategory_id):
 
 @api_view(['GET'])
 def searchRecommendations(request):
-    """
-    Endpoint لعرض توصيات المنتجات بناءً على بيانات عمليات البحث المخزنة للمستخدم
-    دون الحاجة لتمرير معرف القسم الفرعي. يتم اختيار القسم الفرعي الذي يمتلك أعلى مجموع 
-    عمليات البحث الخاصة بالمستخدم (أو بيانات البحث العامة في حال كان المستخدم غير مسجل) 
-    ومن ثم استخدام أعلى عبارة بحث ضمن هذا القسم لعرض المنتجات.
-    """
-    # للمستخدمين المسجلين
     if request.user.is_authenticated:
-        user_search_queries = SearchQuery.objects.filter(user=request.user)
-        if not user_search_queries.exists():
+        search_queryset = SearchQuery.objects.filter(user=request.user).order_by('-id')
+
+        if not search_queryset.exists():
             return Response({"detail": "لا توجد بيانات عمليات بحث للمستخدم."}, status=status.HTTP_404_NOT_FOUND)
-        
-        # تجميع عمليات البحث بحسب القسم الفرعي وحساب المجموع
-        subcategory_counts = user_search_queries.values('subcategory').annotate(total_count=Sum('count')).order_by('-total_count')
+
+        if search_queryset.count() > 5:
+            recent_searches = list(search_queryset[:5])
+        else:
+            recent_searches = list(search_queryset)
+
+        recent_search_ids = [search.id for search in recent_searches]
+
+        subcategory_counts = SearchQuery.objects.filter(id__in=recent_search_ids) \
+            .values('subcategory') \
+            .annotate(total_count=Sum('count')) \
+            .order_by('-total_count')
+
+        if not subcategory_counts:
+            return Response({"detail": "لم يتم العثور على أقسام فرعية."}, status=status.HTTP_404_NOT_FOUND)
+
         top_subcategory_id = subcategory_counts[0]['subcategory']
-        
+
         try:
             subcategory = SubCategory.objects.get(id=top_subcategory_id)
         except SubCategory.DoesNotExist:
             return Response({"detail": "القسم الفرعي غير موجود."}, status=status.HTTP_404_NOT_FOUND)
-        
-        # اختيار أعلى عبارة بحث لهذا القسم للمستخدم
-        search_queries = user_search_queries.filter(subcategory=subcategory).order_by('-count')
-        top_query = search_queries.first().query_text
+
+        top_queries = [q for q in recent_searches if q.subcategory_id == subcategory.id]
+        if not top_queries:
+            return Response({"detail": "لا توجد عبارات بحث مطابقة للقسم الفرعي."}, status=status.HTTP_404_NOT_FOUND)
+
+        top_query = sorted(top_queries, key=lambda x: -x.count)[0].query_text
+
     else:
-        # للمستخدمين غير المسجلين: استخدام بيانات البحث العامة
         global_search_queries = SearchQuery.objects.all()
         if not global_search_queries.exists():
             return Response({"detail": "لا توجد بيانات عمليات بحث."}, status=status.HTTP_404_NOT_FOUND)
-        
-        subcategory_counts = global_search_queries.values('subcategory').annotate(total_count=Sum('count')).order_by('-total_count')
+
+        subcategory_counts = global_search_queries.values('subcategory') \
+            .annotate(total_count=Sum('count')) \
+            .order_by('-total_count')
         top_subcategory_id = subcategory_counts[0]['subcategory']
-        
+
         try:
             subcategory = SubCategory.objects.get(id=top_subcategory_id)
         except SubCategory.DoesNotExist:
             return Response({"detail": "القسم الفرعي غير موجود."}, status=status.HTTP_404_NOT_FOUND)
-        
+
         search_queries = global_search_queries.filter(subcategory=subcategory).order_by('-count')
         top_query = search_queries.first().query_text
 
-    # استخدام أعلى عبارة بحث كمدخل لخوارزمية التوصية
     recommended_products = get_content_based_recommendations(top_query, subcategory.id, Product, top_n=6)
     if not recommended_products:
         return Response({"detail": "لا توجد منتجات موصى بها."}, status=status.HTTP_404_NOT_FOUND)
-    
+
     serialized_recommendations = ProductModelSerializer(recommended_products, many=True)
     return Response(serialized_recommendations.data, status=status.HTTP_200_OK)
+        
    
 @api_view(['POST'])
 def rate_product(request, product_id):
@@ -311,7 +322,7 @@ class GameTypeChoicesView(APIView):
         ]
         return Response(game_types)
     
-class HasDynamicProductRatingPermission(BasePermission):
+class HasDynamicProductRatingSearchPermission(BasePermission):
     def has_permission(self, request, view):
         required_permission = getattr(view, 'required_permission', None)
         return (
@@ -326,6 +337,16 @@ class HasDynamicProductRatingPermission(BasePermission):
 class ProductRatingListView(generics.ListAPIView):
     queryset = ProductRating.objects.all()
     serializer_class = ProductRatingSerializer
-    permission_classes = [HasDynamicProductRatingPermission] 
+    permission_classes = [HasDynamicProductRatingSearchPermission] 
     required_permission = 'products.view_productrating'
     
+class ProductSearchView(generics.ListAPIView):
+    serializer_class = ProductModelSerializer
+    permission_classes = [HasDynamicProductRatingSearchPermission] 
+    required_permission = 'products.view_product'
+    
+    def get_queryset(self):
+        query = self.request.query_params.get('q', None)
+        if query:
+            return Product.objects.filter(name__icontains=query)
+        return Product.objects.none()
