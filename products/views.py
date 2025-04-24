@@ -1,9 +1,9 @@
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view,permission_classes
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework import generics
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission,AllowAny
 # from rest_framework import viewsets
 from django.db.models import Sum
 from rest_framework import viewsets, permissions
@@ -18,6 +18,7 @@ from .serializers import CategoryModelSerializer, ProductModelSerializer,SubCate
 from .utils import get_content_based_recommendations
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def getCategories(request):
     categories= Category.objects.all()
     ser = CategoryModelSerializer(categories, many= True)
@@ -30,6 +31,7 @@ def getSubCategories(request):
     return Response(data= ser.data, status= status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def getSubCategoriesByCatId(request, id):
     subcategories = SubCategory.objects.filter(parent_category_id=id)
     if not subcategories.exists():
@@ -38,6 +40,7 @@ def getSubCategoriesByCatId(request, id):
     return Response(ser.data, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def getProductsBySubCategoryId(request, subcategory_id):
     products = Product.objects.filter(sub_category_id=subcategory_id)
     if not products.exists():
@@ -61,6 +64,7 @@ def getProducts(request):
     return Response(ser.data, status= status.HTTP_200_OK)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def searchProducts(request, subcategory_id):
     # الحصول على النص المدخل من خلال معلمات الطلب
     query = request.query_params.get('q', '').strip()  # تأكد من إزالة المسافات البيضاء
