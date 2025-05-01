@@ -74,7 +74,8 @@ class VerifyCodeView(APIView):
         user = User.objects.create_user(
             username=pending_user.username,
             email=pending_user.email,
-            password=pending_user.password
+            password=pending_user.password,
+            is_staff=not pending_user.is_client
         )
         user.is_active = True
         user.is_client = pending_user.is_client
@@ -297,29 +298,37 @@ class UserListView(generics.ListAPIView):
 class UpdateUserPermissionsView(generics.UpdateAPIView):
     queryset = User.objects.all()
     serializer_class = UsersSerializer
-    permission_classes = [IsAuthenticated, IsSuperUser]  # فقط superuser مسموح له
+    permission_classes = [IsAuthenticated, IsSuperUser]
 
     def update(self, request, *args, **kwargs):
         user = self.get_object()
-        is_staff = request.data.get('is_staff')
         is_superuser = request.data.get('is_superuser')
         is_active = request.data.get('is_active')
-        
-        if is_staff and user.is_client:
-            return Response(
-                {"error": "you can't do that for a client"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
-        if is_staff is not None:
-            user.is_staff = is_staff
-        if is_superuser is not None:
-            user.is_superuser = is_superuser
         if is_active is not None:
+            if user.is_superuser and is_active is False:
+                return Response(
+                    {"error": "You cannot deactivate a superuser."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             user.is_active = is_active
+
+        if is_superuser is not None:
+            if user.is_superuser and is_superuser is False:
+                return Response(
+                    {"error": "You cannot remove superuser status from a superuser."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if is_superuser is True and user.is_client:
+                return Response(
+                    {"error": "You cannot assign superuser status to a client."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            user.is_superuser = is_superuser  # ← حركنا هذا السطر هنا داخل if
 
         user.save()
         return Response({"message": "تم تحديث الصلاحيات بنجاح!"})
+
     
 class UserDetailView(generics.RetrieveAPIView):
     queryset = User.objects.all()
@@ -387,11 +396,18 @@ def delete_user(request, user_id):
             status= status.HTTP_403_FORBIDDEN
         )
     user = get_object_or_404(User, id=user_id)
+    
+    if user.is_superuser:
+        return Response(
+            {"detail": "You cannot delete a superuser."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
     user.delete()
     return Response(
-            {"detail": "user was successfully deleted"},
-            status=status.HTTP_204_NO_CONTENT
-        )
+        {"detail": "User was successfully deleted."},
+        status=status.HTTP_204_NO_CONTENT
+    )
     
 class UserSearchView(generics.ListAPIView):
     serializer_class = UsersSerializer
