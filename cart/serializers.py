@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Cart, CartProduct, Product, Purchase
+from .models import Cart, CartProduct, Product, Purchase,DeliveryAssignment
 from users.models import User
 
 class CartProductSerializer(serializers.ModelSerializer):
@@ -99,7 +99,53 @@ class CartSer(serializers.Serializer):
 class TablePurchaseSerializer(serializers.ModelSerializer):
     customer = serializers.StringRelatedField()
     product = serializers.StringRelatedField()
+    delivered = serializers.SerializerMethodField()
+    delivery_provider = serializers.SerializerMethodField()
 
     class Meta:
         model = Purchase
-        fields = '__all__'
+        fields = ['id', 'customer', 'product', 'quantity', 'purchase_date', 'delivered','delivery_provider']
+        
+    def get_delivered(self, obj):
+        assignment = getattr(obj, 'delivery_assignment', None)
+        return assignment.delivered if assignment else False
+
+    def get_delivery_provider(self, obj):
+        assignment = getattr(obj, 'delivery_assignment', None)
+        if not assignment:
+            return None
+
+        if assignment.delivery_provider:
+            return assignment.delivery_provider.email
+
+        return assignment.provider_email
+        
+class DeliveryAssignmentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeliveryAssignment
+        fields = ['purchase', 'delivery_provider', 'provider_email','delivered']
+        read_only_fields = ['provider_email']
+
+    def validate(self, data):
+    # حالة "تعديل"
+        if self.instance:
+        # إذا تم تغيير الـ purchase، تحقق من التكرار
+            if 'purchase' in data and data['purchase'] != self.instance.purchase:
+                if DeliveryAssignment.objects.filter(purchase=data['purchase']).exclude(id=self.instance.id).exists():
+                    raise serializers.ValidationError("This purchase already has an assigned delivery provider.")
+        else:
+        # حالة "إنشاء"
+            if DeliveryAssignment.objects.filter(purchase=data['purchase']).exists():
+                raise serializers.ValidationError("This purchase already has an assigned delivery provider.")
+        return data
+
+
+class MyDeliveriesSerializer(serializers.ModelSerializer):
+    product = serializers.CharField(source='purchase.product.name')
+    quantity = serializers.IntegerField(source='purchase.quantity')
+    recipient = serializers.EmailField(source='purchase.customer.email')
+    purchase_date = serializers.DateTimeField(source='purchase.purchase_date', format="%Y-%m-%dT%H:%M:%SZ")
+
+    class Meta:
+        model  = DeliveryAssignment
+        fields = ['id', 'product', 'quantity', 'recipient', 'purchase_date', 'delivered']

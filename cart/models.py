@@ -1,6 +1,8 @@
 from django.db import models
 from products.models import Product
 from users.models import User
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 class Cart(models.Model):
     customer = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -35,3 +37,33 @@ class Purchase(models.Model):
 
     def __str__(self) -> str:
         return f'{self.customer.username} bought {self.product.name} (Quantity: {self.quantity})'
+
+class DeliveryAssignment(models.Model):
+    purchase = models.OneToOneField(Purchase, on_delete=models.CASCADE, related_name='delivery_assignment')
+    delivery_provider = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        limit_choices_to={'is_delivery_provider': True}
+        )
+    provider_email = models.EmailField(null=True, blank=True)
+    delivered = models.BooleanField(default=False)
+    
+    class Meta:
+        db_table = "delivery_assignment"
+
+    @receiver(pre_delete, sender=User)
+    def preserve_completed_deliveries(sender, instance, **kwargs):
+        DeliveryAssignment.objects.filter(
+            delivery_provider=instance,
+            delivered=True
+        ).update(delivery_provider=None)
+    
+    def save(self, *args, **kwargs):
+        if self.delivery_provider:
+            self.provider_email = self.delivery_provider.email
+        super().save(*args, **kwargs)
+        
+    def __str__(self):
+        return f"Delivery for {self.purchase.customer.email} by {self.delivery_provider.email}"

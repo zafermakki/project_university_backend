@@ -5,8 +5,8 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework.permissions import BasePermission
 from django.db.models import Sum
-from .serializers import CartCreateSerializer, CartSer,PurchaseSerializer,CartProductUpdateSerializer,TablePurchaseSerializer
-from .models import CartProduct,Purchase
+from .serializers import CartCreateSerializer, CartSer,PurchaseSerializer,CartProductUpdateSerializer,TablePurchaseSerializer,DeliveryAssignmentCreateSerializer,MyDeliveriesSerializer
+from .models import CartProduct,Purchase,DeliveryAssignment
 
 
 @api_view(['POST'])
@@ -145,3 +145,33 @@ class PurchaseListView(generics.ListAPIView):
     serializer_class = TablePurchaseSerializer
     permission_classes = [HasDynamicPermission] 
     required_permission = 'cart.view_purchase'
+    
+class AssignDeliveryProviderView(generics.CreateAPIView):
+    queryset = DeliveryAssignment.objects.all()
+    serializer_class = DeliveryAssignmentCreateSerializer
+    permission_classes = [HasDynamicPermission]
+    required_permission = 'cart.view_purchase'
+    
+class UpdateDeliveryProviderView(generics.UpdateAPIView):
+    queryset = DeliveryAssignment.objects.all()
+    serializer_class = DeliveryAssignmentCreateSerializer
+    permission_classes = [HasDynamicPermission]
+    required_permission = 'cart.view_purchase'
+    lookup_field = 'purchase'
+    lookup_url_kwarg = 'pk'
+
+class MyDeliveriesListView(generics.ListAPIView):
+    serializer_class = MyDeliveriesSerializer
+
+    def get_queryset(self):
+        return DeliveryAssignment.objects.filter(delivery_provider=self.request.user)
+    
+class MarkDeliveredView(generics.UpdateAPIView):
+    queryset = DeliveryAssignment.objects.all()
+    serializer_class = MyDeliveriesSerializer
+
+    http_method_names = ['patch']
+
+    def perform_update(self, serializer):
+        serializer.save(delivered=True)
+    

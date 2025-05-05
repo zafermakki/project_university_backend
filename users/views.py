@@ -79,6 +79,7 @@ class VerifyCodeView(APIView):
         )
         user.is_active = True
         user.is_client = pending_user.is_client
+        user.is_delivery_provider = pending_user.is_delivery_provider
         user.save()
         pending_user.delete()
 
@@ -195,6 +196,8 @@ class AdminLoginView(APIView):
         if user:
             if user.is_client:
                 return Response({"error": "Clients are not allowed to log in from this link"}, status=status.HTTP_403_FORBIDDEN)
+            if user.is_delivery_provider:
+                return Response({"error": "Delivery providers are not allowed to log in from this link"}, status=status.HTTP_403_FORBIDDEN)
             login(request, user)
             token, created = Token.objects.get_or_create(user=user)
             return Response({"token": token.key, "user_id": user.id}, status=status.HTTP_200_OK)
@@ -275,6 +278,68 @@ class ClientLogoutView(APIView):
         except Token.DoesNotExist:
             return Response({"error": "Invalid token or already logged out"}, status=status.HTTP_400_BAD_REQUEST)
         
+# delivery_provider API 
+class DeliveryRegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        data = request.data
+        
+        if len(data['password']) < 8:
+            return Response(
+                {"message": "The password must be 8 or more letters"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if User.objects.filter(email=data['email']).exists():
+            return Response({"message": "This email is already registered please login."}, status=status.HTTP_400_BAD_REQUEST)
+
+        pending_user, created = PendingUser.objects.get_or_create(
+            email=data['email'],
+            defaults={
+                'username': data['username'],
+                'password': data['password'],  # تأكد من تشفير كلمة المرور
+                'is_delivery_provider': True   
+            }
+        )
+
+        if not created:
+            if pending_user.created_at + timedelta(minutes=5) > now():
+                return Response({"message": "Please wait until the previouse attempt ends."}, status=status.HTTP_400_BAD_REQUEST)
+            pending_user.username = data['username']
+            pending_user.password = data['password']
+            pending_user.created_at = now()
+            pending_user.save()
+
+        send_verification_email(pending_user)
+        return Response({"message": "The verification code has been sent to your email, please enter it within 5 minutes."}, status=status.HTTP_200_OK)
+    
+class DeliveryLoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+        user = authenticate(username=email, password=password)
+        if user and user.is_delivery_provider:    
+            first_login = user.last_login is None
+            login(request, user)
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({"token": token.key, "user_id": user.id,"username": user.username,"first_login": first_login}, status=status.HTTP_200_OK)
+        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+class DeliveryLogoutView(APIView):
+    def post(self, request):
+        try:
+            # التحقق من أن المستخدم هو عميل
+            if request.user.is_delivery_provider:
+                token = Token.objects.get(user=request.user)
+                token.delete()
+                return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
+            else:
+                return Response({"error": "error"}, status=status.HTTP_400_BAD_REQUEST)
+        except Token.DoesNotExist:
+            return Response({"error": "Invalid token or already logged out"}, status=status.HTTP_400_BAD_REQUEST)
 # admin pages
 
 class HasDynamicPermission(BasePermission):
@@ -421,3 +486,10 @@ class UserSearchView(generics.ListAPIView):
                 Q(username__icontains=query) | Q(email__icontains=query)
             )
         return User.objects.none()
+    
+class DeliveryProviderListView(generics.ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = UsersSerializer
+
+    def get_queryset(self):
+        return User.objects.filter(is_delivery_provider=True)

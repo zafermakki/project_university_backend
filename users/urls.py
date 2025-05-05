@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RequestPasswordResetView,VerifyAndResetPasswordView,AdminRegisterView,ResendVerificationEmailView,VerifyCodeView, AdminLoginView,AdminLogoutView,ClientRegisterView, ClientLoginView, ClientLogoutView,UserListView, UpdateUserPermissionsView,UserDetailView,UpdateAdminPermissions,UserPermissionsView,PermissionsListView,UserSearchView,get_logged_in_user,delete_user
+from .views import RequestPasswordResetView,VerifyAndResetPasswordView,AdminRegisterView,ResendVerificationEmailView,VerifyCodeView, AdminLoginView,AdminLogoutView,ClientRegisterView, ClientLoginView, ClientLogoutView,DeliveryRegisterView,DeliveryLoginView,DeliveryLogoutView,UserListView, UpdateUserPermissionsView,UserDetailView,UpdateAdminPermissions,UserPermissionsView,PermissionsListView,UserSearchView,DeliveryProviderListView,get_logged_in_user,delete_user
 
 
 urlpatterns = [
@@ -12,12 +12,17 @@ urlpatterns = [
     path('client/register/', ClientRegisterView.as_view(), name='register'),
     path('client/login/', ClientLoginView.as_view(), name='login'),
     path('client/logout/', ClientLogoutView.as_view(), name='logout'),
+    # Delivery
+    path('delivery/register/', DeliveryRegisterView.as_view(), name='delivery-register'),
+    path('delivery/login/', DeliveryLoginView.as_view(), name='delivery-login'),
+    path('delivery/logout/', DeliveryLogoutView.as_view(), name='delivery-logout'),
     # forget password 
     path('password-reset/', RequestPasswordResetView.as_view(), name='password-reset'),
     path('make-reset/', VerifyAndResetPasswordView.as_view(), name='make-reset'),
     # admin pages
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/search/', UserSearchView.as_view(), name='user-search'),
+    path('delivery-providers/', DeliveryProviderListView.as_view(), name='delivery-providers'),
     path('users/<uuid:pk>/update/', UpdateUserPermissionsView.as_view(), name='user-permissions-update'),
     path('user/<uuid:id>/', UserDetailView.as_view(), name='user-detail'),
     path('users/<uuid:pk>/permissions/', UpdateAdminPermissions.as_view(), name='update-user-permissions'),

@@ -20,7 +20,7 @@ class UsersSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email','is_client' ,'is_staff', 'is_superuser', 
-            'is_active', 'date_joined', 'last_login'
+            'is_delivery_provider','is_active', 'date_joined', 'last_login'
         ]
         
 class UserDetailSerializer(serializers.ModelSerializer):
@@ -28,7 +28,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'is_email_verified',
-            'is_staff', 'is_superuser', 'is_active',
+            'is_staff', 'is_superuser','is_delivery_provider','is_active',
             'last_login', 'date_joined', 'is_client'
         ]
         

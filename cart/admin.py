@@ -1,10 +1,11 @@
 from django.contrib import admin
-from .models import CartProduct,Purchase
+from .models import CartProduct,Purchase,DeliveryAssignment
 
 # admin.site.register(Cart)
 
 
 admin.site.register(CartProduct)
+admin.site.register(DeliveryAssignment)
 
 
 @admin.register(Purchase)
