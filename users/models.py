@@ -69,6 +69,7 @@ class PendingUser(models.Model):
     password = models.CharField(max_length=128)
     created_at = models.DateTimeField(auto_now_add=True)
     is_client = models.BooleanField(default= False)
+    is_staff = models.BooleanField(default=False)
     is_delivery_provider = models.BooleanField(default=False)
     verification_code = models.CharField(max_length=6, null=True, blank=True)
     code_expiration = models.DateTimeField(null=True, blank=True)

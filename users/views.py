@@ -75,7 +75,7 @@ class VerifyCodeView(APIView):
             username=pending_user.username,
             email=pending_user.email,
             password=pending_user.password,
-            is_staff=not pending_user.is_client
+            is_staff=pending_user.is_staff
         )
         user.is_active = True
         user.is_client = pending_user.is_client
@@ -167,7 +167,8 @@ class AdminRegisterView(APIView):
             email=data['email'],
             defaults={
                 'username': data['username'],
-                'password': data['password']  # تأكد من تشفير كلمة المرور
+                'password': data['password'],
+                'is_staff': True
             }
         )
         
@@ -179,6 +180,7 @@ class AdminRegisterView(APIView):
             pending_user.username = data['username']
             pending_user.password = data['password']
             pending_user.created_at = now()
+            pending_user.is_staff = True
             pending_user.save()
 
         send_verification_email(pending_user)
@@ -235,7 +237,8 @@ class ClientRegisterView(APIView):
             defaults={
                 'username': data['username'],
                 'password': data['password'],  # تأكد من تشفير كلمة المرور
-                'is_client': True
+                'is_client': True,
+                'is_staff': False
             }
         )
 
@@ -299,7 +302,8 @@ class DeliveryRegisterView(APIView):
             defaults={
                 'username': data['username'],
                 'password': data['password'],  # تأكد من تشفير كلمة المرور
-                'is_delivery_provider': True   
+                'is_delivery_provider': True,
+                'is_staff': False   
             }
         )
 
@@ -387,6 +391,11 @@ class UpdateUserPermissionsView(generics.UpdateAPIView):
             if is_superuser is True and user.is_client:
                 return Response(
                     {"error": "You cannot assign superuser status to a client."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if is_superuser is True and user.is_delivery_provider:
+                return Response(
+                    {"error": "You cannot assign superuser status to a delivery provider."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             user.is_superuser = is_superuser  # ← حركنا هذا السطر هنا داخل if
