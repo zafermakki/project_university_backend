@@ -104,7 +104,7 @@ class TablePurchaseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Purchase
-        fields = ['id', 'customer', 'product', 'quantity', 'purchase_date', 'delivered','delivery_provider']
+        fields = ['id', 'customer', 'product', 'quantity','country','city','phone' ,'purchase_date', 'delivered','delivery_provider']
         
     def get_delivered(self, obj):
         assignment = getattr(obj, 'delivery_assignment', None)
@@ -144,8 +144,11 @@ class MyDeliveriesSerializer(serializers.ModelSerializer):
     product = serializers.CharField(source='purchase.product.name')
     quantity = serializers.IntegerField(source='purchase.quantity')
     recipient = serializers.EmailField(source='purchase.customer.email')
+    country = serializers.CharField(source='purchase.country', read_only=True)
+    city = serializers.CharField(source='purchase.city', read_only=True)
+    phone = serializers.CharField(source='purchase.phone', read_only=True)
     purchase_date = serializers.DateTimeField(source='purchase.purchase_date', format="%Y-%m-%dT%H:%M:%SZ")
 
     class Meta:
         model  = DeliveryAssignment
-        fields = ['id', 'product', 'quantity', 'recipient', 'purchase_date', 'delivered']
+        fields = ['id', 'product', 'quantity', 'recipient', 'purchase_date', 'delivered','country','city','phone']

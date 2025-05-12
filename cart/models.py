@@ -31,6 +31,9 @@ class Purchase(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     purchase_date = models.DateTimeField(auto_now_add=True)
+    country = models.CharField(null=True,blank=True,max_length=100)
+    city = models.CharField(null=True,blank=True,max_length=100)
+    phone = models.CharField(null=True,blank=True,max_length=20)
 
     class Meta:
         db_table = "purchase"

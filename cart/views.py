@@ -42,6 +42,13 @@ def deleteCartItem(request, product_id):
 @api_view(['POST'])
 def complete_purchase(request, customer_id):
     try:
+        country = request.data.get('country')
+        city = request.data.get('city')
+        phone = request.data.get('phone')
+
+        if not all([country, city, phone]):
+            return Response({"error": "Country, city, and phone are required"}, status=status.HTTP_400_BAD_REQUEST)
+        
         with transaction.atomic():
         # Get cart products for the customer
             cart_products = CartProduct.objects.select_for_update().filter(cart__customer__id=customer_id)
@@ -63,7 +70,10 @@ def complete_purchase(request, customer_id):
                 Purchase.objects.create(
                     customer=cart_product.cart.customer,
                     product=cart_product.product,
-                    quantity=cart_product.quantity
+                    quantity=cart_product.quantity,
+                    country=country,
+                    city=city,
+                    phone=phone
                 )
                 # Reduce product stock
                 cart_product.product.quantity -= cart_product.quantity
