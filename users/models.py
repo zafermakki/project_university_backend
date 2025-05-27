@@ -37,6 +37,9 @@ class User(AbstractUser, PermissionsMixin):
         Permission, related_name='users', related_query_name='user', blank=True
     )
     
+    country = models.CharField(null=True,blank=True,max_length=100)
+    city = models.CharField(null=True,blank=True,max_length=100)
+    
     is_superuser = models.BooleanField(default= False)
     is_staff = models.BooleanField(default= False)
     is_active = models.BooleanField(default= True)

@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RequestPasswordResetView,VerifyAndResetPasswordView,AdminRegisterView,ResendVerificationEmailView,VerifyCodeView, AdminLoginView,AdminLogoutView,ClientRegisterView, ClientLoginView, ClientLogoutView,DeliveryRegisterView,DeliveryLoginView,DeliveryLogoutView,UserListView, UpdateUserPermissionsView,UserDetailView,UpdateAdminPermissions,UserPermissionsView,PermissionsListView,UserSearchView,DeliveryProviderListView,get_logged_in_user,delete_user
+from .views import RequestPasswordResetView,VerifyAndResetPasswordView,AdminRegisterView,ResendVerificationEmailView,VerifyCodeView, AdminLoginView,AdminLogoutView,ClientRegisterView, ClientLoginView, ClientLogoutView,DeliveryRegisterView,DeliveryLoginView,DeliveryLogoutView,UserListView, UpdateUserPermissionsView,UserDetailView,UpdateAdminPermissions,UserPermissionsView,PermissionsListView,UserSearchView,DeliveryProviderListView,UpdateLocationView,get_logged_in_user,delete_user
 
 
 urlpatterns = [
@@ -23,6 +23,7 @@ urlpatterns = [
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/search/', UserSearchView.as_view(), name='user-search'),
     path('delivery-providers/', DeliveryProviderListView.as_view(), name='delivery-providers'),
+    path('update-location/', UpdateLocationView.as_view(), name='update-location'),
     path('users/<uuid:pk>/update/', UpdateUserPermissionsView.as_view(), name='user-permissions-update'),
     path('user/<uuid:id>/', UserDetailView.as_view(), name='user-detail'),
     path('users/<uuid:pk>/permissions/', UpdateAdminPermissions.as_view(), name='update-user-permissions'),

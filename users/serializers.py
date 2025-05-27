@@ -20,7 +20,7 @@ class UsersSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email','is_client' ,'is_staff', 'is_superuser', 
-            'is_delivery_provider','is_active', 'date_joined', 'last_login'
+            'is_delivery_provider','is_active', 'country','city','date_joined', 'last_login'
         ]
         
 class UserDetailSerializer(serializers.ModelSerializer):
@@ -41,3 +41,8 @@ class UserPermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'permissions']
+        
+class LocationUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['country', 'city']

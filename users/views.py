@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAdminUser
 from django.utils import timezone
 from django.contrib.auth import authenticate,login
 from .models import User,PendingUser
-from .serializers import UserPermissionSerializer
+from .serializers import UserPermissionSerializer,LocationUpdateSerializer
 from django.contrib.auth.models import Permission
 from django.core.mail import send_mail
 from django.conf import settings
@@ -502,3 +502,13 @@ class DeliveryProviderListView(generics.ListAPIView):
 
     def get_queryset(self):
         return User.objects.filter(is_delivery_provider=True)
+    
+class UpdateLocationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        serializer = LocationUpdateSerializer(request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Location updated successfully."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -14,6 +14,10 @@ class CartSerializer(serializers.ModelSerializer):
 
 class PurchaseSerializer(serializers.ModelSerializer):
     image_path = serializers.CharField(source='product.image_path', read_only=True)
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    customer_email = serializers.CharField(source='customer.email', read_only=True)
+    formatted_date = serializers.DateTimeField(source='purchase_date', format="%d/%m/%Y - %H:%M", read_only=True)
     class Meta:
         model = Purchase
         fields = '__all__'

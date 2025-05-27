@@ -73,7 +73,8 @@ def complete_purchase(request, customer_id):
                     quantity=cart_product.quantity,
                     country=country,
                     city=city,
-                    phone=phone
+                    phone=phone,
+                    price_at_purchase=cart_product.product.final_price
                 )
                 # Reduce product stock
                 cart_product.product.quantity -= cart_product.quantity

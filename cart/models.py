@@ -34,6 +34,7 @@ class Purchase(models.Model):
     country = models.CharField(null=True,blank=True,max_length=100)
     city = models.CharField(null=True,blank=True,max_length=100)
     phone = models.CharField(null=True,blank=True,max_length=20)
+    price_at_purchase = models.DecimalField(max_digits=20, decimal_places=4,null=True,blank=True)
 
     class Meta:
         db_table = "purchase"
