@@ -108,7 +108,7 @@ class TablePurchaseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Purchase
-        fields = ['id', 'customer', 'product', 'quantity','country','city','phone' ,'purchase_date', 'delivered','delivery_provider']
+        fields = ['id', 'customer', 'product', 'quantity','country','city','phone','price_at_purchase' ,'purchase_date', 'delivered','delivery_provider']
         
     def get_delivered(self, obj):
         assignment = getattr(obj, 'delivery_assignment', None)
